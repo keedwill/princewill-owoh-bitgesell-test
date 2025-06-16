@@ -1,6 +1,6 @@
 const request = require("supertest");
 const express = require("express");
-const itemsRouter = require("../routes/items"); // Path to your actual routes file
+const itemsRouter = require("../routes/items"); 
 const fs = require("fs").promises; // Import the promise-based fs
 const { mockItems } = require("./mockData"); // Import mock data
 
@@ -57,7 +57,6 @@ describe("POST /api/items", () => {
     description: "A cool smart watch",
   };
 
-  // HAPPY PATH
   test("should create a new item, return 201 status, and write updated data", async () => {
     const res = await request(app).post("/api/items").send(newItemPayload); // Send the new item data
 
@@ -81,8 +80,6 @@ describe("POST /api/items", () => {
     const writtenFilePath = mockedFsPromises.writeFile.mock.calls[0][0]; // First argument: path
     const writtenDataString = mockedFsPromises.writeFile.mock.calls[0][1]; // Second argument: data string
 
-    
-
     // Parse the written JSON string to verify content
     const writtenItems = JSON.parse(writtenDataString);
 
@@ -98,6 +95,162 @@ describe("POST /api/items", () => {
         id: res.body.id, // The ID returned in the response should be in the written data
       })
     );
+  });
+
+  // ---  PAYLOAD VALIDATION TESTS ---
+
+  test('should return 400 if "name" is missing', async () => {
+    const invalidPayload = { price: 100, category: "Books" };
+    const res = await request(app).post("/api/items").send(invalidPayload);
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body.message).toEqual(
+      "Item name is required and must be a non-empty string."
+    );
+    expect(mockedFsPromises.readFile).not.toHaveBeenCalled(); // Validation should prevent file read
+    expect(mockedFsPromises.writeFile).not.toHaveBeenCalled(); // No write on invalid payload
+  });
+
+  test('should return 400 if "name" is an empty string', async () => {
+    const invalidPayload = { name: "", price: 100, category: "Books" };
+    const res = await request(app).post("/api/items").send(invalidPayload);
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body.message).toEqual(
+      "Item name is required and must be a non-empty string."
+    );
+    expect(mockedFsPromises.readFile).not.toHaveBeenCalled();
+  });
+
+  test('should return 400 if "name" is not a string', async () => {
+    const invalidPayload = { name: 123, price: 100, category: "Books" };
+    const res = await request(app).post("/api/items").send(invalidPayload);
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body.message).toEqual(
+      "Item name is required and must be a non-empty string."
+    );
+    expect(mockedFsPromises.readFile).not.toHaveBeenCalled();
+  });
+
+  test('should return 400 if "name" is only whitespace', async () => {
+    const invalidPayload = { name: "   ", price: 100, category: "Books" };
+    const res = await request(app).post("/api/items").send(invalidPayload);
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body.message).toEqual(
+      "Item name is required and must be a non-empty string."
+    );
+    expect(mockedFsPromises.readFile).not.toHaveBeenCalled();
+  });
+
+
+  test('should return 400 if "price" is missing', async () => {
+    const invalidPayload = { name: "Book", category: "Fiction" };
+    const res = await request(app).post("/api/items").send(invalidPayload);
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body.message).toEqual(
+      "Item price is required and must be a positive number."
+    );
+    expect(mockedFsPromises.readFile).not.toHaveBeenCalled();
+  });
+
+  test('should return 400 if "price" is not a number', async () => {
+    const invalidPayload = {
+      name: "Book",
+      price: "invalid",
+      category: "Fiction",
+    };
+    const res = await request(app).post("/api/items").send(invalidPayload);
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body.message).toEqual(
+      "Item price is required and must be a positive number."
+    );
+    expect(mockedFsPromises.readFile).not.toHaveBeenCalled();
+  });
+
+  test('should return 400 if "price" is zero', async () => {
+    const invalidPayload = { name: "Book", price: 0, category: "Fiction" };
+    const res = await request(app).post("/api/items").send(invalidPayload);
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body.message).toEqual(
+      "Item price is required and must be a positive number."
+    );
+    expect(mockedFsPromises.readFile).not.toHaveBeenCalled();
+  });
+
+  test('should return 400 if "price" is negative', async () => {
+    const invalidPayload = { name: "Book", price: -10, category: "Fiction" };
+    const res = await request(app).post("/api/items").send(invalidPayload);
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body.message).toEqual(
+      "Item price is required and must be a positive number."
+    );
+    expect(mockedFsPromises.readFile).not.toHaveBeenCalled();
+  });
+
+
+  test('should return 400 if "category" is missing', async () => {
+    const invalidPayload = { name: "Book", price: 100 };
+    const res = await request(app).post("/api/items").send(invalidPayload);
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body.message).toEqual(
+      "Item category is required and must be a non-empty string."
+    );
+    expect(mockedFsPromises.readFile).not.toHaveBeenCalled();
+  });
+
+  test('should return 400 if "category" is an empty string', async () => {
+    const invalidPayload = { name: "Book", price: 100, category: "" };
+    const res = await request(app).post("/api/items").send(invalidPayload);
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body.message).toEqual(
+      "Item category is required and must be a non-empty string."
+    );
+    expect(mockedFsPromises.readFile).not.toHaveBeenCalled();
+  });
+
+  test('should return 400 if "category" is not a string', async () => {
+    const invalidPayload = { name: "Book", price: 100, category: [] };
+    const res = await request(app).post("/api/items").send(invalidPayload);
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body.message).toEqual(
+      "Item category is required and must be a non-empty string."
+    );
+    expect(mockedFsPromises.readFile).not.toHaveBeenCalled();
+  });
+
+  // Test for entirely empty body (if Express's json() parser yields empty object)
+  test("should return 400 if payload is an empty object", async () => {
+    const res = await request(app).post("/api/items").send({}); // Send an empty object
+
+    expect(res.statusCode).toEqual(400);
+    // The first validation check (`!item.name`) will catch this
+    expect(res.body.message).toEqual(
+      "Item name is required and must be a non-empty string."
+    );
+    expect(mockedFsPromises.readFile).not.toHaveBeenCalled();
+  });
+
+  // Test for non-JSON body (if Express's json() parser yields empty object)
+  test("should return 400 if payload is non-JSON or malformed", async () => {
+    const res = await request(app)
+      .post("/api/items")
+      .set("Content-Type", "text/plain") // Send plain text instead of JSON
+      .send("This is not JSON");
+
+    expect(res.statusCode).toEqual(400); // Express's json() middleware will usually cause a 400 for malformed JSON, or it'll be empty body
+    expect(res.body.message).toEqual(
+      "Item name is required and must be a non-empty string."
+    ); // Falls through to first validation error
+    expect(mockedFsPromises.readFile).not.toHaveBeenCalled();
   });
 
   // ERROR CASES

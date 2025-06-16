@@ -3,15 +3,23 @@
   "version": "2.0.0",
   "private": true,
   "dependencies": {
+    "jest-mock-extended": "^4.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.23.0",
-    "react-scripts": "5.0.1"
+    "react-scripts": "5.0.1",
+    "react-window": "^1.8.11"
   },
   "scripts": {
     "start": "cross-env PORT=3000 react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test"
+    "test": "jest"
+  },
+  "jest": {
+    "testEnvironment": "jsdom",
+    "setupFilesAfterEnv": [
+      "<rootDir>/src/setupTests.js"
+    ]
   },
   "browserslist": {
     "production": [
@@ -26,6 +34,15 @@
     ]
   },
   "devDependencies": {
-    "cross-env": "^7.0.3"
+    "@babel/core": "^7.27.4",
+    "@babel/preset-env": "^7.27.2",
+    "@babel/preset-react": "^7.27.1",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "babel-jest": "^30.0.0",
+    "cross-env": "^7.0.3",
+    "jest-fetch-mock": "^3.0.3",
+    "tailwindcss": "^3.4.17"
   }
 }

@@ -1,8 +1,8 @@
 const request = require("supertest");
 const express = require("express");
-const itemsRouter = require("../routes/items"); // Path to your actual routes file
-const fs = require("fs").promises; // Import the promise-based fs
-const { mockItems } = require("./mockData"); // Import mock data
+const itemsRouter = require("../routes/items"); 
+const fs = require("fs").promises; 
+const { mockItems } = require("./mockData"); 
 
 // --- Mock fs.promises for file operations ---
 jest.mock("fs", () => ({
@@ -19,7 +19,7 @@ let mockedFsPromises;
 const createApp = () => {
   const app = express();
   app.use(express.json()); // Essential if other routes in items.js use req.body
-  app.use("/api/items", itemsRouter); // Mount your items router
+  app.use("/api/items", itemsRouter); 
 
   // Generic error handling middleware for tests
   app.use((err, req, res, next) => {
@@ -51,7 +51,7 @@ beforeEach(() => {
 // --- Test Suite for GET /api/items/:id ---
 
 describe("GET /api/items/:id", () => {
-  // HAPPY PATHS
+
   test("should return a single item by ID if found", async () => {
     const res = await request(app).get("/api/items/1");
     expect(res.statusCode).toEqual(200);

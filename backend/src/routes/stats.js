@@ -7,59 +7,52 @@ const { readData } = require('../utils/readData');
 const DATA_PATH = path.join(__dirname, '../../data/items.json');
 const WORKER_PATH = path.join(__dirname, "../utils/worker.js");
 
-// // GET /api/stats
-// router.get('/', (req, res, next) => {
-//   fs.readFile(DATA_PATH, (err, raw) => {
-//     if (err) return next(err);
-
-//     const items = JSON.parse(raw);
-//     // Intentional heavy CPU calculation
-//     const stats = {
-//       total: items.length,
-//       averagePrice: items.reduce((acc, cur) => acc + cur.price, 0) / items.length
-//     };
-
-//     res.json(stats);
-//   });
-// });
-
-
 
 // GET /api/stats
-router.get('/', async (req, res, next) => {
+router.get("/", async (req, res, next) => {
   try {
-    // 1. Read data asynchronously (non-blocking I/O)
+    //  Read data asynchronously:
+    // This performs non-blocking I/O, ensuring the main thread remains responsive.
     const items = await readData(DATA_PATH);
 
-    // 2. Offload the heavy CPU calculation to a worker thread
-    const worker = new Worker(WORKER_PATH); // Create a new worker instance
+    //  Offload CPU-bound calculation to a worker thread:
+    // Creating a new Worker instance allows computationally intensive tasks
+    // to run on a separate thread, preventing the Node.js event loop from blocking
+    // and maintaining responsiveness for other incoming requests.
+    const worker = new Worker(WORKER_PATH);
 
-    // Send the data needed for calculation to the worker
+    // Send the data required for the heavy calculation to the worker thread.
+    // This message initiates the processing within the worker.
     worker.postMessage(items);
 
-    // Listen for the 'message' event from the worker when it sends back results
-    worker.on('message', (stats) => {
-      res.json(stats); // Send the response to the client
-      worker.terminate(); // Important: Terminate the worker thread to free resources
+    // Set up event listeners for the worker thread:
+
+    // 'message' event: Fired when the worker sends results back to the main thread.
+    worker.on("message", (stats) => {
+      res.json(stats); // Send the calculated statistics as the API response.
+      worker.terminate(); // Crucial: Terminate the worker to free up system resources immediately after use.
     });
 
-    // Handle any errors that might occur within the worker thread
-    worker.on('error', (err) => {
-      console.error('Worker thread error:', err);
-      worker.terminate(); // Ensure worker is terminated on error
-      next(err); // Pass the error to Express's error handling middleware
+    // 'error' event: Fired if any uncaught error occurs within the worker thread.
+    worker.on("error", (err) => {
+      console.error("Worker thread error:", err);
+      worker.terminate(); // Ensure the worker is terminated even on error to prevent resource leaks.
+      next(err); // Pass the error to Express's centralized error handling middleware.
     });
 
-    // Handle the worker exiting (e.g., if it crashes or finishes)
-    worker.on('exit', (code) => {
+    // 'exit' event: Fired when the worker thread exits.
+    // This is useful for debugging if the worker terminates unexpectedly.
+    worker.on("exit", (code) => {
       if (code !== 0) {
+        // A non-zero exit code indicates an abnormal termination.
         console.error(`Worker stopped with exit code ${code}`);
       }
+      // No 'next(err)' here, as the 'error' event already handles error propagation.
     });
-
   } catch (err) {
-    // Catch errors from readData() or any synchronous errors before worker creation
-    next(err);
+    // Catch any errors that occur before the worker thread is fully initialized,
+    // such as issues during `readData()` or synchronous errors.
+    next(err); // Pass the error to the Express error handling middleware.
   }
 });
 module.exports = router;
