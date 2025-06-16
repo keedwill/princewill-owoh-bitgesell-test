@@ -30,7 +30,7 @@ Make sure you have Node.js installed.
 Installation
    1.) Clone the repository:
          git clone https://github.com/keedwill/princewill-owoh-bitgesell-test
-         cd backend / frontend
+         cd backend
 
    2.) Install NPM packages:
          npm install
